@@ -14,6 +14,8 @@
 		D313F90C1BFC25470050DDE0 /* DrawingBook.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = D313F90A1BFC25470050DDE0 /* DrawingBook.xcdatamodeld */; };
 		D313F90E1BFC25470050DDE0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D313F90D1BFC25470050DDE0 /* Assets.xcassets */; };
 		D313F9111BFC25470050DDE0 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = D313F90F1BFC25470050DDE0 /* LaunchScreen.storyboard */; };
+		D313F9191BFC25C10050DDE0 /* opencv2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D313F9181BFC25C10050DDE0 /* opencv2.framework */; };
+		D313F91B1BFC25CA0050DDE0 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D313F91A1BFC25CA0050DDE0 /* Accelerate.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,6 +30,8 @@
 		D313F90D1BFC25470050DDE0 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D313F9101BFC25470050DDE0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		D313F9121BFC25470050DDE0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		D313F9181BFC25C10050DDE0 /* opencv2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = opencv2.framework; sourceTree = "<group>"; };
+		D313F91A1BFC25CA0050DDE0 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -35,6 +39,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D313F91B1BFC25CA0050DDE0 /* Accelerate.framework in Frameworks */,
+				D313F9191BFC25C10050DDE0 /* opencv2.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -44,6 +50,8 @@
 		D313F8F21BFC25460050DDE0 = {
 			isa = PBXGroup;
 			children = (
+				D313F91A1BFC25CA0050DDE0 /* Accelerate.framework */,
+				D313F9181BFC25C10050DDE0 /* opencv2.framework */,
 				D313F8FD1BFC25470050DDE0 /* DrawingBook */,
 				D313F8FC1BFC25470050DDE0 /* Products */,
 			);
@@ -267,6 +275,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
 				INFOPLIST_FILE = DrawingBook/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = kunfungl.DrawingBook;
@@ -278,6 +290,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
 				INFOPLIST_FILE = DrawingBook/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = kunfungl.DrawingBook;

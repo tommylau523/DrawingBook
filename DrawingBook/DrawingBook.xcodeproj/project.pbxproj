@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2442E1E11C0D5CB900388E09 /* template.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 2442E1E01C0D5CB900388E09 /* template.jpg */; };
 		246758C41C01100B0040B9B8 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 246758C31C01100B0040B9B8 /* AVFoundation.framework */; };
 		246758C61C0115B60040B9B8 /* AssetsLibrary.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 246758C51C0115B60040B9B8 /* AssetsLibrary.framework */; };
 		246758C81C0115C40040B9B8 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 246758C71C0115C40040B9B8 /* CoreGraphics.framework */; };
@@ -18,7 +19,6 @@
 		246758D41C0115F10040B9B8 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 246758D31C0115F10040B9B8 /* Foundation.framework */; };
 		246758D71C0119200040B9B8 /* armadillo in Resources */ = {isa = PBXBuildFile; fileRef = 246758D51C0119200040B9B8 /* armadillo */; };
 		246758D81C0119200040B9B8 /* armadillo_bits in Resources */ = {isa = PBXBuildFile; fileRef = 246758D61C0119200040B9B8 /* armadillo_bits */; };
-		246758DB1C012D1D0040B9B8 /* template.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 246758DA1C012D1D0040B9B8 /* template.jpg */; };
 		D313F9001BFC25470050DDE0 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = D313F8FF1BFC25470050DDE0 /* main.m */; };
 		D313F9031BFC25470050DDE0 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = D313F9021BFC25470050DDE0 /* AppDelegate.m */; };
 		D313F9061BFC25470050DDE0 /* ViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = D313F9051BFC25470050DDE0 /* ViewController.mm */; };
@@ -31,6 +31,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		2442E1E01C0D5CB900388E09 /* template.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = template.jpg; sourceTree = "<group>"; };
 		246758C31C01100B0040B9B8 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		246758C51C0115B60040B9B8 /* AssetsLibrary.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AssetsLibrary.framework; path = System/Library/Frameworks/AssetsLibrary.framework; sourceTree = SDKROOT; };
 		246758C71C0115C40040B9B8 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -42,7 +43,6 @@
 		246758D31C0115F10040B9B8 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		246758D51C0119200040B9B8 /* armadillo */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = armadillo; sourceTree = "<group>"; };
 		246758D61C0119200040B9B8 /* armadillo_bits */ = {isa = PBXFileReference; lastKnownFileType = folder; path = armadillo_bits; sourceTree = "<group>"; };
-		246758DA1C012D1D0040B9B8 /* template.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = template.jpg; sourceTree = "<group>"; };
 		D313F8FB1BFC25470050DDE0 /* DrawingBook.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DrawingBook.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D313F8FF1BFC25470050DDE0 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		D313F9011BFC25470050DDE0 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -137,8 +137,8 @@
 		D313F8FE1BFC25470050DDE0 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				2442E1E01C0D5CB900388E09 /* template.jpg */,
 				D313F8FF1BFC25470050DDE0 /* main.m */,
-				246758DA1C012D1D0040B9B8 /* template.jpg */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -202,7 +202,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D313F9111BFC25470050DDE0 /* LaunchScreen.storyboard in Resources */,
-				246758DB1C012D1D0040B9B8 /* template.jpg in Resources */,
+				2442E1E11C0D5CB900388E09 /* template.jpg in Resources */,
 				246758D81C0119200040B9B8 /* armadillo_bits in Resources */,
 				D313F90E1BFC25470050DDE0 /* Assets.xcassets in Resources */,
 				246758D71C0119200040B9B8 /* armadillo in Resources */,

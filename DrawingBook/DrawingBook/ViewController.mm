@@ -12,6 +12,7 @@
 #include <opencv2/opencv.hpp>
 #include "opencv2/highgui/ios.h"
 #include <opencv2/features2d/features2d.hpp>
+#include "opencv2/nonfree/nonfree.hpp"
 #endif
 
 // Include stdlib.h and std namespace so we can mix C++ code in here
@@ -39,9 +40,9 @@ using namespace std;
     [super viewDidLoad];
     // Do any additional setup after loading the view, typically from a nib.
     UIImage *template_image = [UIImage imageNamed:@"template.jpg"];
-    detector = new cv::OrbFeatureDetector(600);
+    detector = new cv::OrbFeatureDetector(3000);
     extractor = new cv::OrbDescriptorExtractor;
-    matcher = new cv::BFMatcher(cv::NORM_L2, true);
+    matcher = new cv::BFMatcher(cv::NORM_HAMMING, true);
     template_im = [self cvMatFromUIImage:template_image];
     K_template = getKeyPoints(template_im, detector);
     extractor->compute(template_im, K_template, template_descriptor);
@@ -99,8 +100,61 @@ using namespace std;
     
     matcher->match(descriptor_output, template_descriptor, matches);
     
-    cv::drawMatches(gray, K, template_gray, K_template, matches, image);
-    //cvtColor(image_copy, image, CV_BGR2BGRA);
+    
+    
+    
+    
+    
+    double max_dist = 0; double min_dist = 300;
+    
+    //-- Quick calculation of max and min distances between keypoints
+    for( int i = 0; i < matches.size(); i++ )
+    { double dist = matches[i].distance;
+        if( dist < min_dist ) min_dist = dist;
+        if( dist > max_dist ) max_dist = dist;
+    }
+    
+    printf("-- Max dist : %f \n", max_dist );
+    printf("-- Min dist : %f \n", min_dist );
+    
+    std::vector< cv::DMatch > good_matches;
+    
+    for( int i = 0; i < matches.size(); i++ )
+    { if( matches[i].distance < 4*min_dist )
+    { good_matches.push_back( matches[i]); }
+    }
+    
+    
+    cv::vector<cv::Point2f> source;
+    cv::vector<cv::Point2f> dest;
+    
+    for(int i = 0; i < good_matches.size(); i++){
+        source.push_back(K[good_matches[i].queryIdx].pt);
+        dest.push_back(K_template[good_matches[i].trainIdx].pt);
+    }
+    if(good_matches.size() >= 10){
+        cv::Mat H = cv::findHomography(source, dest, CV_RANSAC);
+        //cout << H << endl;
+    
+    
+    std::vector<cv::Point2f> obj_corners(4);
+    obj_corners[0] = cvPoint(0,0);
+    obj_corners[1] = cvPoint( template_im.cols, 0 );
+    obj_corners[2] = cvPoint( template_im.cols, template_im.rows );
+    obj_corners[3] = cvPoint( 0, template_im.rows );
+    std::vector<cv::Point2f> scene_corners(4);
+    cv::perspectiveTransform( obj_corners, scene_corners, H);
+        cout << H << endl;
+        
+    //-- Draw lines between the corners (the mapped object in the scene - image_2 )
+    cv::line( image_copy, scene_corners[0], scene_corners[1], cv::Scalar(0, 255, 0), 4 );
+    cv::line( image_copy, scene_corners[1], scene_corners[2], cv::Scalar( 0, 255, 0), 4 );
+    cv::line( image_copy, scene_corners[2], scene_corners[3], cv::Scalar( 0, 255, 0), 4 );
+    cv::line( image_copy, scene_corners[3], scene_corners[0], cv::Scalar( 0, 255, 0), 4 );
+
+    }
+    //cv::drawMatches(gray, K, template_gray, K_template, good_matches, image);
+    cvtColor(image_copy, image, CV_BGR2BGRA);
 }
 
 

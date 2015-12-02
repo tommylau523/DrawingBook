@@ -7,7 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		2442E1E11C0D5CB900388E09 /* template.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 2442E1E01C0D5CB900388E09 /* template.jpg */; };
+		2442E1E51C0E560800388E09 /* template.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 2442E1E41C0E560800388E09 /* template.jpg */; };
+		2442E1EA1C0E5C1700388E09 /* armadillo in Resources */ = {isa = PBXBuildFile; fileRef = 2442E1E81C0E5C1700388E09 /* armadillo */; };
+		2442E1EB1C0E5C1700388E09 /* armadillo_bits in Resources */ = {isa = PBXBuildFile; fileRef = 2442E1E91C0E5C1700388E09 /* armadillo_bits */; };
 		246758C41C01100B0040B9B8 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 246758C31C01100B0040B9B8 /* AVFoundation.framework */; };
 		246758C61C0115B60040B9B8 /* AssetsLibrary.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 246758C51C0115B60040B9B8 /* AssetsLibrary.framework */; };
 		246758C81C0115C40040B9B8 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 246758C71C0115C40040B9B8 /* CoreGraphics.framework */; };
@@ -17,8 +19,6 @@
 		246758D01C0115E30040B9B8 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 246758CF1C0115E30040B9B8 /* QuartzCore.framework */; };
 		246758D21C0115EA0040B9B8 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 246758D11C0115EA0040B9B8 /* UIKit.framework */; };
 		246758D41C0115F10040B9B8 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 246758D31C0115F10040B9B8 /* Foundation.framework */; };
-		246758D71C0119200040B9B8 /* armadillo in Resources */ = {isa = PBXBuildFile; fileRef = 246758D51C0119200040B9B8 /* armadillo */; };
-		246758D81C0119200040B9B8 /* armadillo_bits in Resources */ = {isa = PBXBuildFile; fileRef = 246758D61C0119200040B9B8 /* armadillo_bits */; };
 		D313F9001BFC25470050DDE0 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = D313F8FF1BFC25470050DDE0 /* main.m */; };
 		D313F9031BFC25470050DDE0 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = D313F9021BFC25470050DDE0 /* AppDelegate.m */; };
 		D313F9061BFC25470050DDE0 /* ViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = D313F9051BFC25470050DDE0 /* ViewController.mm */; };
@@ -31,7 +31,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		2442E1E01C0D5CB900388E09 /* template.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = template.jpg; sourceTree = "<group>"; };
+		2442E1E41C0E560800388E09 /* template.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = template.jpg; sourceTree = "<group>"; };
+		2442E1E81C0E5C1700388E09 /* armadillo */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = armadillo; sourceTree = "<group>"; };
+		2442E1E91C0E5C1700388E09 /* armadillo_bits */ = {isa = PBXFileReference; lastKnownFileType = folder; path = armadillo_bits; sourceTree = "<group>"; };
 		246758C31C01100B0040B9B8 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		246758C51C0115B60040B9B8 /* AssetsLibrary.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AssetsLibrary.framework; path = System/Library/Frameworks/AssetsLibrary.framework; sourceTree = SDKROOT; };
 		246758C71C0115C40040B9B8 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -41,8 +43,6 @@
 		246758CF1C0115E30040B9B8 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		246758D11C0115EA0040B9B8 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		246758D31C0115F10040B9B8 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
-		246758D51C0119200040B9B8 /* armadillo */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = armadillo; sourceTree = "<group>"; };
-		246758D61C0119200040B9B8 /* armadillo_bits */ = {isa = PBXFileReference; lastKnownFileType = folder; path = armadillo_bits; sourceTree = "<group>"; };
 		D313F8FB1BFC25470050DDE0 /* DrawingBook.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DrawingBook.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D313F8FF1BFC25470050DDE0 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		D313F9011BFC25470050DDE0 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -83,8 +83,6 @@
 		246758D91C01196D0040B9B8 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				246758D51C0119200040B9B8 /* armadillo */,
-				246758D61C0119200040B9B8 /* armadillo_bits */,
 				246758D31C0115F10040B9B8 /* Foundation.framework */,
 				246758D11C0115EA0040B9B8 /* UIKit.framework */,
 				246758CF1C0115E30040B9B8 /* QuartzCore.framework */,
@@ -120,6 +118,8 @@
 		D313F8FD1BFC25470050DDE0 /* DrawingBook */ = {
 			isa = PBXGroup;
 			children = (
+				2442E1E81C0E5C1700388E09 /* armadillo */,
+				2442E1E91C0E5C1700388E09 /* armadillo_bits */,
 				D313F9011BFC25470050DDE0 /* AppDelegate.h */,
 				D313F9021BFC25470050DDE0 /* AppDelegate.m */,
 				D313F9041BFC25470050DDE0 /* ViewController.h */,
@@ -137,7 +137,7 @@
 		D313F8FE1BFC25470050DDE0 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
-				2442E1E01C0D5CB900388E09 /* template.jpg */,
+				2442E1E41C0E560800388E09 /* template.jpg */,
 				D313F8FF1BFC25470050DDE0 /* main.m */,
 			);
 			name = "Supporting Files";
@@ -201,11 +201,11 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2442E1EB1C0E5C1700388E09 /* armadillo_bits in Resources */,
 				D313F9111BFC25470050DDE0 /* LaunchScreen.storyboard in Resources */,
-				2442E1E11C0D5CB900388E09 /* template.jpg in Resources */,
-				246758D81C0119200040B9B8 /* armadillo_bits in Resources */,
+				2442E1EA1C0E5C1700388E09 /* armadillo in Resources */,
+				2442E1E51C0E560800388E09 /* template.jpg in Resources */,
 				D313F90E1BFC25470050DDE0 /* Assets.xcassets in Resources */,
-				246758D71C0119200040B9B8 /* armadillo in Resources */,
 				D313F9091BFC25470050DDE0 /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

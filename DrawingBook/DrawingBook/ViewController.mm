@@ -127,17 +127,27 @@ using namespace std;
         }
         
         
-        cv::vector<cv::Point2f> source;
+        cv::vector<cv::Point3f> source;
         cv::vector<cv::Point2f> dest;
         
         for(int i = 0; i < good_matches.size(); i++){
-            source.push_back(template_keypoints[good_matches[i].queryIdx].pt);
+            source.push_back(cv::Point3f(template_keypoints[good_matches[i].queryIdx].pt.x,
+                                         template_keypoints[good_matches[i].queryIdx].pt.y,
+                                         0));
             dest.push_back(image_keypoints[good_matches[i].trainIdx].pt);
         }
         if(good_matches.size() >= 10){
-            cv::Mat H = cv::findHomography(source, dest, CV_RANSAC);
-            cv::Mat E = get_extrinsics(intrinsics, H);
-            cv::Mat camera = intrinsics*E;
+            //cv::Mat H = cv::findHomography(source, dest, CV_RANSAC);
+            //cv::Mat E = get_extrinsics(intrinsics, H);
+            //cv::Mat camera = intrinsics*E;
+            cv::Mat rvec, tvec;
+            cv::Mat distCoeffs(4,1,cv::DataType<double>::type);
+            distCoeffs.at<double>(0) = 0;
+            distCoeffs.at<double>(1) = 0;
+            distCoeffs.at<double>(2) = 0;
+            distCoeffs.at<double>(3) = 0;
+            cv::solvePnPRansac(source, dest, intrinsics, distCoeffs, rvec, tvec,false, 200, 8.0, good_matches.size()/2);
+            
             
             std::vector<cv::Point3f> proj_corners(4);
             std::vector<cv::Point2f> scene_proj_corners(4);
@@ -145,7 +155,9 @@ using namespace std;
             proj_corners[1] = cv::Point3f( template_im.cols, 0, 0 );
             proj_corners[2] = cv::Point3f( template_im.cols, template_im.rows, 0 );
             proj_corners[3] = cv::Point3f( 0, template_im.rows, 0 );
-            cv::perspectiveTransform(proj_corners, scene_proj_corners, camera);
+            //cv::perspectiveTransform(proj_corners, scene_proj_corners, camera);
+            cv::projectPoints(proj_corners, rvec, tvec, intrinsics, distCoeffs, scene_proj_corners);
+            
             
             cv::line( image_copy, scene_proj_corners[0], scene_proj_corners[1], cv::Scalar(255, 255, 0), 4 );
             cv::line( image_copy, scene_proj_corners[1], scene_proj_corners[2], cv::Scalar( 255, 255, 0), 4 );
@@ -153,13 +165,13 @@ using namespace std;
             cv::line( image_copy, scene_proj_corners[3], scene_proj_corners[0], cv::Scalar( 255, 255, 0), 4 );
             
             
-            std::vector<cv::Point2f> obj_corners(4);
-            obj_corners[0] = cvPoint(0,0);
-            obj_corners[1] = cvPoint( template_im.cols, 0 );
-            obj_corners[2] = cvPoint( template_im.cols, template_im.rows );
-            obj_corners[3] = cvPoint( 0, template_im.rows );
-            std::vector<cv::Point2f> scene_corners(4);
-            cv::perspectiveTransform( obj_corners, scene_corners, H);
+//            std::vector<cv::Point2f> obj_corners(4);
+//            obj_corners[0] = cvPoint(0,0);
+//            obj_corners[1] = cvPoint( template_im.cols, 0 );
+//            obj_corners[2] = cvPoint( template_im.cols, template_im.rows );
+//            obj_corners[3] = cvPoint( 0, template_im.rows );
+//            std::vector<cv::Point2f> scene_corners(4);
+            //cv::perspectiveTransform( obj_corners, scene_corners, H);
             //cout << H << endl;
             //cout << scene_corners << endl;
             //-- Draw lines between the corners (the mapped object in the scene - image_2 )

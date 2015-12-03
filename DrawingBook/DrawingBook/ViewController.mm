@@ -48,11 +48,11 @@ using namespace std;
     template_keypoints = getKeyPoints(template_im, detector);
     extractor->compute(template_im, template_keypoints, template_descriptor);
     intrinsics = cv::Mat::zeros(3,3,CV_64F);
-    intrinsics.at<double>(0,0) = 3043.72;
-    intrinsics.at<double>(1,1) = 3043.72;
+    intrinsics.at<double>(0,0) = 2871.8995;
+    intrinsics.at<double>(1,1) = 2871.8995;
     intrinsics.at<double>(2,2) = 1;
-    intrinsics.at<double>(0,2) = 1196;
-    intrinsics.at<double>(1,2) = 1604;
+    intrinsics.at<double>(0,2) = 1631.5;
+    intrinsics.at<double>(1,2) = 1223.5;
     
     // 1. Setup the your OpenCV view, so it takes up the entire App screen......
     int view_width = self.view.frame.size.width;
@@ -128,57 +128,119 @@ using namespace std;
         
         
         cv::vector<cv::Point3f> source;
+        cv::vector<cv::Point2f> source2;
         cv::vector<cv::Point2f> dest;
         
         for(int i = 0; i < good_matches.size(); i++){
             source.push_back(cv::Point3f(template_keypoints[good_matches[i].queryIdx].pt.x,
                                          template_keypoints[good_matches[i].queryIdx].pt.y,
                                          0));
+            source2.push_back(template_keypoints[good_matches[i].queryIdx].pt);
             dest.push_back(image_keypoints[good_matches[i].trainIdx].pt);
         }
-        if(good_matches.size() >= 10){
-            //cv::Mat H = cv::findHomography(source, dest, CV_RANSAC);
+        if(good_matches.size() >= 50){
+            cv::Mat H = cv::findHomography(source2, dest, CV_RANSAC, 5);
             //cv::Mat E = get_extrinsics(intrinsics, H);
             //cv::Mat camera = intrinsics*E;
             cv::Mat rvec, tvec;
-            cv::Mat distCoeffs(4,1,cv::DataType<double>::type);
-            distCoeffs.at<double>(0) = 0;
-            distCoeffs.at<double>(1) = 0;
+            cv::Mat distCoeffs(5,1,cv::DataType<double>::type);
+            distCoeffs.at<double>(0) = -.0008211;
+            distCoeffs.at<double>(1) = 0.640757;
             distCoeffs.at<double>(2) = 0;
             distCoeffs.at<double>(3) = 0;
-            cv::solvePnPRansac(source, dest, intrinsics, distCoeffs, rvec, tvec,false, 200, 8.0, good_matches.size()/2);
+            distCoeffs.at<double>(4) = -1.7248;
+            //cv::solvePnPRansac(source, dest, intrinsics, distCoeffs, rvec, tvec,false, 200, 8.0, good_matches.size()/2);
             
             
             std::vector<cv::Point3f> proj_corners(4);
             std::vector<cv::Point2f> scene_proj_corners(4);
+            
+            //cv::perspectiveTransform(proj_corners, scene_proj_corners, camera);
+            
+            std::vector<cv::Point2f> obj_corners(4);
+            obj_corners[0] = cvPoint(0,0);
+            obj_corners[1] = cvPoint( template_im.cols, 0 );
+            obj_corners[2] = cvPoint( template_im.cols, template_im.rows );
+            obj_corners[3] = cvPoint( 0, template_im.rows );
+            std::vector<cv::Point2f> scene_corners(4);
+            cv::perspectiveTransform( obj_corners, scene_corners, H);
+            //cout << H << endl;
+            //cout << scene_corners << endl;
+            //-- Draw lines between the corners (the mapped object in the scene - image_2 )
+            cv::line( image_copy, scene_corners[0], scene_corners[1], cv::Scalar(0, 255, 0), 4 );
+            cv::line( image_copy, scene_corners[1], scene_corners[2], cv::Scalar( 0, 255, 0), 4 );
+            cv::line( image_copy, scene_corners[2], scene_corners[3], cv::Scalar( 0, 255, 0), 4 );
+            cv::line( image_copy, scene_corners[3], scene_corners[0], cv::Scalar( 0, 255, 0), 4 );
+            
+            //std::vector<cv::Point2f> sqaure_corners(4);
+            float x = 120;
+            float y = 385;
+            float w = 188;
+            //sqaure_corners[0] = cvPoint(x, y);
+            //sqaure_corners[1] = cvPoint(x+w, y);
+            //sqaure_corners[2] = cvPoint(x+w, y+w);
+            //sqaure_corners[3] = cvPoint(x, y+w);
+            //std::vector<cv::Point2f> proj_square_corners(4);
+            
+            //cv::perspectiveTransform( sqaure_corners, proj_square_corners, H);
+            
+//            cv::line( image_copy, proj_square_corners[0], proj_square_corners[1], cv::Scalar(255, 255, 0), 4 );
+//            cv::line( image_copy, proj_square_corners[1], proj_square_corners[2], cv::Scalar( 255, 255, 0), 4 );
+//            cv::line( image_copy, proj_square_corners[2], proj_square_corners[3], cv::Scalar( 255, 255, 0), 4 );
+//            cv::line( image_copy, proj_square_corners[3], proj_square_corners[0], cv::Scalar( 255, 255, 0), 4 );
+            
             proj_corners[0] = cv::Point3f(0,0,0);
             proj_corners[1] = cv::Point3f( template_im.cols, 0, 0 );
             proj_corners[2] = cv::Point3f( template_im.cols, template_im.rows, 0 );
             proj_corners[3] = cv::Point3f( 0, template_im.rows, 0 );
-            //cv::perspectiveTransform(proj_corners, scene_proj_corners, camera);
+            
+            cv::solvePnP(proj_corners, scene_corners, intrinsics, distCoeffs, rvec, tvec);
+            
+            std::vector<cv::Point3f> cube_corners(8);
+            //left face
+            cube_corners[0] = cv::Point3f(x + w, y, 0);
+            cube_corners[1] = cv::Point3f(x + w, y, -w );
+            cube_corners[2] = cv::Point3f(x + w, y + w, -w );
+            cube_corners[3] = cv::Point3f(x + w, y + w, 0 );
+            cube_corners[4] = cv::Point3f(x + w + w, y, 0);
+            cube_corners[5] = cv::Point3f(x + w + w, y, -w );
+            cube_corners[6] = cv::Point3f(x + w + w, y + w, -w );
+            cube_corners[7] = cv::Point3f(x + w + w, y + w, 0 );
+            
+            std::vector<cv::Point2f> cube_proj_corners;
+            cv::projectPoints(cube_corners, rvec, tvec, intrinsics, distCoeffs, cube_proj_corners);
             cv::projectPoints(proj_corners, rvec, tvec, intrinsics, distCoeffs, scene_proj_corners);
             
+            cv::line( image_copy, scene_proj_corners[0], scene_proj_corners[1], cv::Scalar(255, 0, 255), 4 );
+            cv::line( image_copy, scene_proj_corners[1], scene_proj_corners[2], cv::Scalar(255, 0, 255), 4 );
+            cv::line( image_copy, scene_proj_corners[2], scene_proj_corners[3], cv::Scalar(255, 0, 255), 4 );
+            cv::line( image_copy, scene_proj_corners[3], scene_proj_corners[0], cv::Scalar(255, 0, 255), 4 );
             
-            cv::line( image_copy, scene_proj_corners[0], scene_proj_corners[1], cv::Scalar(255, 255, 0), 4 );
-            cv::line( image_copy, scene_proj_corners[1], scene_proj_corners[2], cv::Scalar( 255, 255, 0), 4 );
-            cv::line( image_copy, scene_proj_corners[2], scene_proj_corners[3], cv::Scalar( 255, 255, 0), 4 );
-            cv::line( image_copy, scene_proj_corners[3], scene_proj_corners[0], cv::Scalar( 255, 255, 0), 4 );
+            
+            cv::line( image_copy, cube_proj_corners[0], cube_proj_corners[3], cv::Scalar(0, 0, 255), 4 );
+            cv::line( image_copy, cube_proj_corners[0], cube_proj_corners[4], cv::Scalar(0, 0, 255), 4 );
+            cv::line( image_copy, cube_proj_corners[3], cube_proj_corners[7], cv::Scalar(0, 0, 255), 4 );
+            cv::line( image_copy, cube_proj_corners[4], cube_proj_corners[7], cv::Scalar(0, 0, 255), 4 );
+            
+            cv::line( image_copy, cube_proj_corners[0], cube_proj_corners[1], cv::Scalar(0, 0, 255), 4 );
+            cv::line( image_copy, cube_proj_corners[2], cube_proj_corners[3], cv::Scalar(0, 0, 255), 4 );
+            cv::line( image_copy, cube_proj_corners[4], cube_proj_corners[5], cv::Scalar(0, 0, 255), 4 );
+            cv::line( image_copy, cube_proj_corners[6], cube_proj_corners[7], cv::Scalar(0, 0, 255), 4 );
+            
+            cv::line( image_copy, cube_proj_corners[1], cube_proj_corners[5], cv::Scalar(0, 0, 255), 4 );
+            cv::line( image_copy, cube_proj_corners[1], cube_proj_corners[2], cv::Scalar(0, 0, 255), 4 );
+            cv::line( image_copy, cube_proj_corners[5], cube_proj_corners[6], cv::Scalar(0, 0, 255), 4 );
+            cv::line( image_copy, cube_proj_corners[2], cube_proj_corners[6], cv::Scalar(0, 0, 255), 4 );
             
             
-//            std::vector<cv::Point2f> obj_corners(4);
-//            obj_corners[0] = cvPoint(0,0);
-//            obj_corners[1] = cvPoint( template_im.cols, 0 );
-//            obj_corners[2] = cvPoint( template_im.cols, template_im.rows );
-//            obj_corners[3] = cvPoint( 0, template_im.rows );
-//            std::vector<cv::Point2f> scene_corners(4);
-            //cv::perspectiveTransform( obj_corners, scene_corners, H);
-            //cout << H << endl;
-            //cout << scene_corners << endl;
-            //-- Draw lines between the corners (the mapped object in the scene - image_2 )
-            //cv::line( image_copy, scene_corners[0], scene_corners[1], cv::Scalar(0, 255, 0), 4 );
-            //cv::line( image_copy, scene_corners[1], scene_corners[2], cv::Scalar( 0, 255, 0), 4 );
-            //cv::line( image_copy, scene_corners[2], scene_corners[3], cv::Scalar( 0, 255, 0), 4 );
-            //cv::line( image_copy, scene_corners[3], scene_corners[0], cv::Scalar( 0, 255, 0), 4 );
+            cv::Mat camera_template;//(template_im.cols, template_im.rows, CV_8UC3, cv::Scalar(0,0,0));
+            cv::warpPerspective(image_copy, camera_template, H.inv(), template_im.size());
+            cvtColor(camera_template, camera_template, CV_RGB2BGR);
+            
+            cv::Rect sq1(x, y, w, w);
+            cv::Mat cameraSq1 = camera_template(sq1);
+            image_copy = cameraSq1;
+            
             
         }
     } @catch(NSException *theException) {
@@ -193,7 +255,7 @@ using namespace std;
 
 cv::Mat get_extrinsics(cv::Mat intrinsics, cv::Mat H){
     cv::Mat U, l, V, Hp, t, Omega, o;
-    cout << intrinsics << endl;
+    //cout << intrinsics << endl;
     Hp = intrinsics.inv() * H;
     t = Hp.col(2);
     Hp = Hp.colRange(0, 2);

@@ -25,12 +25,13 @@ using namespace std;
     UIImageView *liveView_; // Live output from the camera
     CvVideoCamera *videoCamera_; // OpenCV wrapper class to simplfy camera access through AVFoundation;
     cv::vector<cv::KeyPoint> template_keypoints;
-    cv::Mat template_im;
+    cv::Mat template_im, template_gray, template_copy;
     cv::Mat template_descriptor;
     cv::Ptr<cv::FeatureDetector> detector;
     cv::Ptr<cv::DescriptorExtractor> extractor;
     cv::Ptr<cv::BFMatcher> matcher;
     cv::Mat intrinsics;
+    
 }
 @property (nonatomic, retain) CvVideoCamera* videoCamera;
 @end
@@ -45,6 +46,8 @@ using namespace std;
     extractor = new cv::OrbDescriptorExtractor;
     matcher = new cv::BFMatcher(cv::NORM_HAMMING, true);
     template_im = [self cvMatFromUIImage:template_image];
+    cvtColor(template_im, template_gray, CV_BGRA2GRAY);
+    cvtColor(template_im, template_copy, CV_BGRA2BGR);
     template_keypoints = getKeyPoints(template_im, detector);
     extractor->compute(template_im, template_keypoints, template_descriptor);
     intrinsics = cv::Mat::zeros(3,3,CV_64F);
@@ -93,13 +96,12 @@ using namespace std;
 {
     
     // Do some OpenCV stuff with the image
-    cv::Mat image_copy, gray, template_gray;
+    cv::Mat image_copy, gray;
     cv::Mat image_descriptor;
     std::vector<cv::DMatch> matches;
     
     cvtColor(image, image_copy, CV_BGRA2BGR);
     cvtColor(image_copy, gray, CV_BGRA2GRAY);
-    cvtColor(template_im, template_gray, CV_BGRA2GRAY);
     
     @try{
         cv::vector<cv::KeyPoint> image_keypoints = getKeyPoints(image_copy, detector);
@@ -234,14 +236,31 @@ using namespace std;
             
             
             cv::Mat camera_template;//(template_im.cols, template_im.rows, CV_8UC3, cv::Scalar(0,0,0));
-            cv::warpPerspective(image_copy, camera_template, H.inv(), template_im.size());
-            cvtColor(camera_template, camera_template, CV_RGB2BGR);
-            
+            cv::warpPerspective(image_copy, camera_template, H.inv(), template_copy.size());
+            //cvtColor(camera_template, camera_template, CV_RGB2BGR);
+            cv::Mat cameraSq1;
             cv::Rect sq1(x, y, w, w);
-            cv::Mat cameraSq1 = camera_template(sq1);
-            image_copy = cameraSq1;
+            //camera_template(sq1).copyTo(cameraSq1);
+            cameraSq1 = cv::Mat(camera_template, sq1).clone();
+            //cameraSq1.copyTo(image_copy);
             
+            std::vector<cv::Point2f> sq1_proj(4);
+            std::vector<cv::Point2f> sq1_pts(4);
+            sq1_proj[0] = cube_proj_corners[1];
+            sq1_pts[0] = cv::Point2f(0 ,0);
             
+            sq1_proj[1] = cube_proj_corners[0];
+            sq1_pts[1] = cv::Point2f(cameraSq1.cols ,0);
+            
+            sq1_proj[2] = cube_proj_corners[2];
+            sq1_pts[2] = cv::Point2f(0 , cameraSq1.rows);
+            
+            sq1_proj[3] = cube_proj_corners[3];
+            sq1_pts[3] = cv::Point2f(cameraSq1.cols, cameraSq1.rows);
+            
+            overlay_image(image_copy, cameraSq1, cv::findHomography(sq1_pts, sq1_proj));
+            
+             
         }
     } @catch(NSException *theException) {
         cout << theException.name << endl;
@@ -251,6 +270,26 @@ using namespace std;
     //cv::drawMatches(gray, K, template_gray, K_template, good_matches, image);
     cvtColor(image_copy, image, CV_BGR2BGRA);
     
+}
+
+void overlay_image(cv::Mat image, cv::Mat square, cv::Mat H){
+    cv::warpPerspective(square, square, H, image.size());
+    cv::Mat square_gray, mask, mask_inv, roi, mask_fg, mask_bg;
+    image.copyTo(roi);
+    
+    //Now create a mask of logo and create its inverse mask also
+    cv::cvtColor(square, square_gray, CV_BGR2GRAY);
+    cv::threshold(square_gray, mask, 10, 255, cv::THRESH_BINARY);
+    cv::bitwise_not(mask, mask_inv);
+    
+    //Now black-out the area of logo in ROI
+    cv::bitwise_and(roi,roi, mask_bg, mask_inv);
+    
+    //Take only region of logo from logo image.
+    cv::bitwise_and(square, square, mask_fg, mask);
+
+    //Put logo in ROI and modify the main image
+    cv::add(mask_bg, mask_fg, image);
 }
 
 cv::Mat get_extrinsics(cv::Mat intrinsics, cv::Mat H){

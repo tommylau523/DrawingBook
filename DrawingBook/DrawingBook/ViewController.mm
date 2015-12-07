@@ -31,6 +31,7 @@ using namespace std;
     cv::Ptr<cv::DescriptorExtractor> extractor;
     cv::Ptr<cv::BFMatcher> matcher;
     cv::Mat intrinsics;
+    //cv::Mat prev_image;
     
 }
 @property (nonatomic, retain) CvVideoCamera* videoCamera;
@@ -42,7 +43,7 @@ using namespace std;
     [super viewDidLoad];
     // Do any additional setup after loading the view, typically from a nib.
     UIImage *template_image = [UIImage imageNamed:@"template.jpg"];
-    detector = new cv::OrbFeatureDetector(3000);
+    detector = new cv::OrbFeatureDetector(1000);
     extractor = new cv::OrbDescriptorExtractor;
     matcher = new cv::BFMatcher(cv::NORM_HAMMING, true);
     template_im = [self cvMatFromUIImage:template_image];
@@ -154,17 +155,19 @@ using namespace std;
             //cv::solvePnPRansac(source, dest, intrinsics, distCoeffs, rvec, tvec,false, 200, 8.0, good_matches.size()/2);
             
             
-            std::vector<cv::Point3f> proj_corners(4);
-            std::vector<cv::Point2f> scene_proj_corners(4);
+            std::vector<cv::Point3f> proj_corners(6);
+            std::vector<cv::Point2f> scene_proj_corners(6);
             
             //cv::perspectiveTransform(proj_corners, scene_proj_corners, camera);
             
-            std::vector<cv::Point2f> obj_corners(4);
+            std::vector<cv::Point2f> obj_corners(6);
             obj_corners[0] = cvPoint(0,0);
             obj_corners[1] = cvPoint( template_im.cols, 0 );
             obj_corners[2] = cvPoint( template_im.cols, template_im.rows );
             obj_corners[3] = cvPoint( 0, template_im.rows );
-            std::vector<cv::Point2f> scene_corners(4);
+            obj_corners[4] = cvPoint( template_im.cols/2, template_im.rows/2 );
+            obj_corners[5] = cvPoint( 0, template_im.rows/2 );
+            std::vector<cv::Point2f> scene_corners(6);
             cv::perspectiveTransform( obj_corners, scene_corners, H);
             //cout << H << endl;
             //cout << scene_corners << endl;
@@ -174,91 +177,157 @@ using namespace std;
             cv::line( image_copy, scene_corners[2], scene_corners[3], cv::Scalar( 0, 255, 0), 4 );
             cv::line( image_copy, scene_corners[3], scene_corners[0], cv::Scalar( 0, 255, 0), 4 );
             
-            //std::vector<cv::Point2f> sqaure_corners(4);
             float x = 120;
             float y = 385;
             float w = 188;
-            //sqaure_corners[0] = cvPoint(x, y);
-            //sqaure_corners[1] = cvPoint(x+w, y);
-            //sqaure_corners[2] = cvPoint(x+w, y+w);
-            //sqaure_corners[3] = cvPoint(x, y+w);
-            //std::vector<cv::Point2f> proj_square_corners(4);
-            
-            //cv::perspectiveTransform( sqaure_corners, proj_square_corners, H);
-            
-//            cv::line( image_copy, proj_square_corners[0], proj_square_corners[1], cv::Scalar(255, 255, 0), 4 );
-//            cv::line( image_copy, proj_square_corners[1], proj_square_corners[2], cv::Scalar( 255, 255, 0), 4 );
-//            cv::line( image_copy, proj_square_corners[2], proj_square_corners[3], cv::Scalar( 255, 255, 0), 4 );
-//            cv::line( image_copy, proj_square_corners[3], proj_square_corners[0], cv::Scalar( 255, 255, 0), 4 );
-            
+            float h = -200;
             proj_corners[0] = cv::Point3f(0,0,0);
             proj_corners[1] = cv::Point3f( template_im.cols, 0, 0 );
             proj_corners[2] = cv::Point3f( template_im.cols, template_im.rows, 0 );
             proj_corners[3] = cv::Point3f( 0, template_im.rows, 0 );
+            proj_corners[4] = cv::Point3f( template_im.cols/2, template_im.rows/2, 0);
+            proj_corners[5] = cv::Point3f( 0, template_im.rows/2, 0);
             
             cv::solvePnP(proj_corners, scene_corners, intrinsics, distCoeffs, rvec, tvec);
             
             std::vector<cv::Point3f> cube_corners(8);
             //left face
-            cube_corners[0] = cv::Point3f(x + w, y, 0);
-            cube_corners[1] = cv::Point3f(x + w, y, -w );
-            cube_corners[2] = cv::Point3f(x + w, y + w, -w );
-            cube_corners[3] = cv::Point3f(x + w, y + w, 0 );
-            cube_corners[4] = cv::Point3f(x + w + w, y, 0);
-            cube_corners[5] = cv::Point3f(x + w + w, y, -w );
-            cube_corners[6] = cv::Point3f(x + w + w, y + w, -w );
-            cube_corners[7] = cv::Point3f(x + w + w, y + w, 0 );
+            cube_corners[0] = cv::Point3f(x + w, y, h);
+            cube_corners[1] = cv::Point3f(x + w, y, h-w );
+            cube_corners[2] = cv::Point3f(x + w, y + w, h-w );
+            cube_corners[3] = cv::Point3f(x + w, y + w, h );
+            cube_corners[4] = cv::Point3f(x + w + w, y, h);
+            cube_corners[5] = cv::Point3f(x + w + w, y, h-w );
+            cube_corners[6] = cv::Point3f(x + w + w, y + w, h-w );
+            cube_corners[7] = cv::Point3f(x + w + w, y + w, h );
             
             std::vector<cv::Point2f> cube_proj_corners;
             cv::projectPoints(cube_corners, rvec, tvec, intrinsics, distCoeffs, cube_proj_corners);
             cv::projectPoints(proj_corners, rvec, tvec, intrinsics, distCoeffs, scene_proj_corners);
             
-            cv::line( image_copy, scene_proj_corners[0], scene_proj_corners[1], cv::Scalar(255, 0, 255), 4 );
-            cv::line( image_copy, scene_proj_corners[1], scene_proj_corners[2], cv::Scalar(255, 0, 255), 4 );
-            cv::line( image_copy, scene_proj_corners[2], scene_proj_corners[3], cv::Scalar(255, 0, 255), 4 );
-            cv::line( image_copy, scene_proj_corners[3], scene_proj_corners[0], cv::Scalar(255, 0, 255), 4 );
+            cv::line( image_copy, scene_proj_corners[0], scene_proj_corners[1], cv::Scalar(255, 0, 255), 1 );
+            cv::line( image_copy, scene_proj_corners[1], scene_proj_corners[2], cv::Scalar(255, 0, 255), 1 );
+            cv::line( image_copy, scene_proj_corners[2], scene_proj_corners[3], cv::Scalar(255, 0, 255), 1 );
+            cv::line( image_copy, scene_proj_corners[3], scene_proj_corners[0], cv::Scalar(255, 0, 255), 1 );
             
             
-            cv::line( image_copy, cube_proj_corners[0], cube_proj_corners[3], cv::Scalar(0, 0, 255), 4 );
-            cv::line( image_copy, cube_proj_corners[0], cube_proj_corners[4], cv::Scalar(0, 0, 255), 4 );
-            cv::line( image_copy, cube_proj_corners[3], cube_proj_corners[7], cv::Scalar(0, 0, 255), 4 );
-            cv::line( image_copy, cube_proj_corners[4], cube_proj_corners[7], cv::Scalar(0, 0, 255), 4 );
+            cv::line( image_copy, cube_proj_corners[0], cube_proj_corners[3], cv::Scalar(0, 0, 255), 1 );
+            cv::line( image_copy, cube_proj_corners[0], cube_proj_corners[4], cv::Scalar(0, 0, 255), 1 );
+            cv::line( image_copy, cube_proj_corners[3], cube_proj_corners[7], cv::Scalar(0, 0, 255), 1 );
+            cv::line( image_copy, cube_proj_corners[4], cube_proj_corners[7], cv::Scalar(0, 0, 255), 1 );
             
-            cv::line( image_copy, cube_proj_corners[0], cube_proj_corners[1], cv::Scalar(0, 0, 255), 4 );
-            cv::line( image_copy, cube_proj_corners[2], cube_proj_corners[3], cv::Scalar(0, 0, 255), 4 );
-            cv::line( image_copy, cube_proj_corners[4], cube_proj_corners[5], cv::Scalar(0, 0, 255), 4 );
-            cv::line( image_copy, cube_proj_corners[6], cube_proj_corners[7], cv::Scalar(0, 0, 255), 4 );
+            cv::line( image_copy, cube_proj_corners[0], cube_proj_corners[1], cv::Scalar(0, 0, 255), 1 );
+            cv::line( image_copy, cube_proj_corners[2], cube_proj_corners[3], cv::Scalar(0, 0, 255), 1 );
+            cv::line( image_copy, cube_proj_corners[4], cube_proj_corners[5], cv::Scalar(0, 0, 255), 1 );
+            cv::line( image_copy, cube_proj_corners[6], cube_proj_corners[7], cv::Scalar(0, 0, 255), 1 );
             
-            cv::line( image_copy, cube_proj_corners[1], cube_proj_corners[5], cv::Scalar(0, 0, 255), 4 );
-            cv::line( image_copy, cube_proj_corners[1], cube_proj_corners[2], cv::Scalar(0, 0, 255), 4 );
-            cv::line( image_copy, cube_proj_corners[5], cube_proj_corners[6], cv::Scalar(0, 0, 255), 4 );
-            cv::line( image_copy, cube_proj_corners[2], cube_proj_corners[6], cv::Scalar(0, 0, 255), 4 );
+            cv::line( image_copy, cube_proj_corners[1], cube_proj_corners[5], cv::Scalar(0, 0, 255), 1 );
+            cv::line( image_copy, cube_proj_corners[1], cube_proj_corners[2], cv::Scalar(0, 0, 255), 1 );
+            cv::line( image_copy, cube_proj_corners[5], cube_proj_corners[6], cv::Scalar(0, 0, 255), 1 );
+            cv::line( image_copy, cube_proj_corners[2], cube_proj_corners[6], cv::Scalar(0, 0, 255), 1 );
             
-            
-            cv::Mat camera_template;//(template_im.cols, template_im.rows, CV_8UC3, cv::Scalar(0,0,0));
+            cv::Mat camera_template;
             cv::warpPerspective(image_copy, camera_template, H.inv(), template_copy.size());
-            //cvtColor(camera_template, camera_template, CV_RGB2BGR);
+            
+            //SQUARE 1
             cv::Mat cameraSq1;
             cv::Rect sq1(x, y, w, w);
-            //camera_template(sq1).copyTo(cameraSq1);
             cameraSq1 = cv::Mat(camera_template, sq1).clone();
-            //cameraSq1.copyTo(image_copy);
-            
             std::vector<cv::Point2f> sq1_proj(4);
             std::vector<cv::Point2f> sq1_pts(4);
             sq1_proj[0] = cube_proj_corners[1];
             sq1_pts[0] = cv::Point2f(0 ,0);
-            
             sq1_proj[1] = cube_proj_corners[0];
             sq1_pts[1] = cv::Point2f(cameraSq1.cols ,0);
-            
             sq1_proj[2] = cube_proj_corners[2];
             sq1_pts[2] = cv::Point2f(0 , cameraSq1.rows);
-            
             sq1_proj[3] = cube_proj_corners[3];
             sq1_pts[3] = cv::Point2f(cameraSq1.cols, cameraSq1.rows);
             
-            overlay_image(image_copy, cameraSq1, cv::findHomography(sq1_pts, sq1_proj));
+            //SQUARE 2
+            cv::Mat cameraSq2;
+            cv::Rect sq2(x+w, y-w, w, w);
+            cameraSq2 = cv::Mat(camera_template, sq2).clone();
+            std::vector<cv::Point2f> sq2_proj(4);
+            std::vector<cv::Point2f> sq2_pts(4);
+            sq2_proj[0] = cube_proj_corners[1];
+            sq2_pts[0] = cv::Point2f(0 ,0);
+            sq2_proj[1] = cube_proj_corners[5];
+            sq2_pts[1] = cv::Point2f(cameraSq2.cols ,0);
+            sq2_proj[2] = cube_proj_corners[0];
+            sq2_pts[2] = cv::Point2f(0 , cameraSq2.rows);
+            sq2_proj[3] = cube_proj_corners[4];
+            sq2_pts[3] = cv::Point2f(cameraSq2.cols, cameraSq2.rows);
+            
+            
+            //SQUARE 3
+            cv::Mat cameraSq3;
+            cv::Rect sq3(x+w, y, w, w);
+            cameraSq3 = cv::Mat(camera_template, sq3).clone();
+            std::vector<cv::Point2f> sq3_proj(4);
+            std::vector<cv::Point2f> sq3_pts(4);
+            sq3_proj[0] = cube_proj_corners[0];
+            sq3_pts[0] = cv::Point2f(0 ,0);
+            sq3_proj[1] = cube_proj_corners[4];
+            sq3_pts[1] = cv::Point2f(cameraSq3.cols ,0);
+            sq3_proj[2] = cube_proj_corners[3];
+            sq3_pts[2] = cv::Point2f(0 , cameraSq3.rows);
+            sq3_proj[3] = cube_proj_corners[7];
+            sq3_pts[3] = cv::Point2f(cameraSq3.cols, cameraSq3.rows);
+            
+            //SQUARE 4
+            cv::Mat cameraSq4;
+            cv::Rect sq4(x+w, y+w, w, w);
+            cameraSq4 = cv::Mat(camera_template, sq4).clone();
+            std::vector<cv::Point2f> sq4_proj(4);
+            std::vector<cv::Point2f> sq4_pts(4);
+            sq4_proj[0] = cube_proj_corners[3];
+            sq4_pts[0] = cv::Point2f(0 ,0);
+            sq4_proj[1] = cube_proj_corners[7];
+            sq4_pts[1] = cv::Point2f(cameraSq4.cols ,0);
+            sq4_proj[2] = cube_proj_corners[2];
+            sq4_pts[2] = cv::Point2f(0 , cameraSq4.rows);
+            sq4_proj[3] = cube_proj_corners[6];
+            sq4_pts[3] = cv::Point2f(cameraSq4.cols, cameraSq4.rows);
+            
+            //SQUARE 5
+            cv::Mat cameraSq5;
+            cv::Rect sq5(x+w, y+w+w, w, w);
+            cameraSq5 = cv::Mat(camera_template, sq5).clone();
+            std::vector<cv::Point2f> sq5_proj(4);
+            std::vector<cv::Point2f> sq5_pts(4);
+            sq5_proj[0] = cube_proj_corners[2];
+            sq5_pts[0] = cv::Point2f(0 ,0);
+            sq5_proj[1] = cube_proj_corners[6];
+            sq5_pts[1] = cv::Point2f(cameraSq5.cols ,0);
+            sq5_proj[2] = cube_proj_corners[1];
+            sq5_pts[2] = cv::Point2f(0 , cameraSq5.rows);
+            sq5_proj[3] = cube_proj_corners[5];
+            sq5_pts[3] = cv::Point2f(cameraSq5.cols, cameraSq5.rows);
+            
+            //SQUARE 6
+            cv::Mat cameraSq6;
+            cv::Rect sq6(x+w+w, y, w, w);
+            cameraSq6 = cv::Mat(camera_template, sq6).clone();
+            std::vector<cv::Point2f> sq6_proj(4);
+            std::vector<cv::Point2f> sq6_pts(4);
+            sq6_proj[0] = cube_proj_corners[4];
+            sq6_pts[0] = cv::Point2f(0 ,0);
+            sq6_proj[1] = cube_proj_corners[5];
+            sq6_pts[1] = cv::Point2f(cameraSq6.cols ,0);
+            sq6_proj[2] = cube_proj_corners[7];
+            sq6_pts[2] = cv::Point2f(0 , cameraSq6.rows);
+            sq6_proj[3] = cube_proj_corners[6];
+            sq6_pts[3] = cv::Point2f(cameraSq6.cols, cameraSq6.rows);
+            
+            draw_background(H, image_copy, template_im.cols, template_im.rows);
+            overlay_image(image_copy, cameraSq3, sq3_pts, sq3_proj);
+            overlay_image(image_copy, cameraSq1, sq1_pts, sq1_proj);
+            overlay_image(image_copy, cameraSq2, sq2_pts, sq2_proj);
+            overlay_image(image_copy, cameraSq4, sq4_pts, sq4_proj);
+            overlay_image(image_copy, cameraSq5, sq5_pts, sq5_proj);
+            overlay_image(image_copy, cameraSq6, sq6_pts, sq6_proj);
+            
             
              
         }
@@ -272,13 +341,42 @@ using namespace std;
     
 }
 
-void overlay_image(cv::Mat image, cv::Mat square, cv::Mat H){
-    cv::warpPerspective(square, square, H, image.size());
+void overlay_image(cv::Mat image, cv::Mat square, std::vector<cv::Point2f> sq_pts, std::vector<cv::Point2f> sq_proj){
+    cv::Point2f x = sq_proj[1] - sq_proj[0];
+    cv::Point2f y = sq_proj[2] - sq_proj[0];
+    if(x.x*y.y - x.y*y.x < 0){
+        cv::Mat H = cv::findHomography(sq_pts, sq_proj);
+        cv::warpPerspective(square, square, H, image.size());
+        cv::Mat square_gray, mask, mask_inv, roi, mask_fg, mask_bg;
+        image.copyTo(roi);
+        
+        //Now create a mask of logo and create its inverse mask also
+        cv::cvtColor(square, square_gray, CV_BGR2GRAY);
+        cv::threshold(square_gray, mask, 10, 255, cv::THRESH_BINARY);
+        cv::bitwise_not(mask, mask_inv);
+        
+        //Now black-out the area of logo in ROI
+        cv::bitwise_and(roi,roi, mask_bg, mask_inv);
+        
+        //Take only region of logo from logo image.
+        cv::bitwise_and(square, square, mask_fg, mask);
+        
+        //Put logo in ROI and modify the main image
+        cv::add(mask_bg, mask_fg, image);
+    }
+}
+
+void draw_background(cv::Mat H, cv::Mat image, int w, int h){
+    
+    cv::Mat bg(h, w, CV_8UC3, cv::Scalar(255,255,255));
+    
+    
+    cv::warpPerspective(bg, bg, H, image.size());
     cv::Mat square_gray, mask, mask_inv, roi, mask_fg, mask_bg;
     image.copyTo(roi);
     
     //Now create a mask of logo and create its inverse mask also
-    cv::cvtColor(square, square_gray, CV_BGR2GRAY);
+    cv::cvtColor(bg, square_gray, CV_BGR2GRAY);
     cv::threshold(square_gray, mask, 10, 255, cv::THRESH_BINARY);
     cv::bitwise_not(mask, mask_inv);
     
@@ -286,8 +384,8 @@ void overlay_image(cv::Mat image, cv::Mat square, cv::Mat H){
     cv::bitwise_and(roi,roi, mask_bg, mask_inv);
     
     //Take only region of logo from logo image.
-    cv::bitwise_and(square, square, mask_fg, mask);
-
+    cv::bitwise_and(bg, bg, mask_fg, mask);
+    
     //Put logo in ROI and modify the main image
     cv::add(mask_bg, mask_fg, image);
 }

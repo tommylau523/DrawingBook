@@ -14,6 +14,8 @@
 //#include "opencv2/highgui/ios.h"
 #include <opencv2/features2d/features2d.hpp>
 #include "opencv2/nonfree/nonfree.hpp"
+#import <UIKit/UIKit.h>
+#import <CoreMotion/CoreMotion.h>
 //#include "armadillo"
 #endif
 
@@ -36,6 +38,7 @@ using namespace std;
 
     std::vector<cv::Point2f> prev_scene_corners;
     double prev_scene_updated;
+    CMAcceleration acc;
     std::vector<cv::KalmanFilter> KF;
     std::vector<cv::Point2f> obj_corners;
     
@@ -43,6 +46,10 @@ using namespace std;
 }
 @property (nonatomic, retain) CvVideoCamera* videoCamera;
 @end
+
+
+
+
 
 @implementation ViewController
 
@@ -75,6 +82,19 @@ using namespace std;
 
     started = false;
     
+    self.motionManager = [[CMMotionManager alloc] init];
+    self.motionManager.accelerometerUpdateInterval = .2;
+    self.motionManager.gyroUpdateInterval = .2;
+    
+    [self.motionManager startAccelerometerUpdatesToQueue:[NSOperationQueue currentQueue]
+                                             withHandler:^(CMAccelerometerData  *accelerometerData, NSError *error) {
+                                                 [self outputAccelertionData:accelerometerData.acceleration];
+                                                 if(error){
+                                                     
+                                                     NSLog(@"%@", error);
+                                                 }
+                                             }];
+    
     
     obj_corners = std::vector<cv::Point2f> (4);
     obj_corners[0] = cvPoint(0,0);
@@ -85,7 +105,7 @@ using namespace std;
     
     // 1. Setup the your OpenCV view, so it takes up the entire App screen......
     int view_width = self.view.frame.size.width;
-    int view_height = (1280*view_width)/720; // Work out the viw-height assuming 640x480 input
+    int view_height = (960*view_width)/540; // Work out the viw-height assuming 640x480 input
     int view_offset = (self.view.frame.size.height - view_height)/2;
     liveView_ = [[UIImageView alloc] initWithFrame:CGRectMake(0.0, view_offset, view_width, view_height)];
     [self.view addSubview:liveView_];
@@ -102,7 +122,7 @@ using namespace std;
     videoCamera_.defaultAVCaptureDevicePosition = AVCaptureDevicePositionBack;
     
     // This is used to set the image resolution
-    videoCamera_.defaultAVCaptureSessionPreset = AVCaptureSessionPreset1280x720;
+    videoCamera_.defaultAVCaptureSessionPreset = AVCaptureSessionPresetiFrame960x540;
     
     // This is used to determine the device orientation
     videoCamera_.defaultAVCaptureVideoOrientation = AVCaptureVideoOrientationLandscapeLeft;
@@ -116,6 +136,8 @@ using namespace std;
     // Dispose of any resources that can be recreated.
 }
 
+- (void)resetMaxValues:(id)sender{
+}
 
 std::vector<cv::KalmanFilter> start_KF(std::vector<cv::Point2f> pts){
     std::vector<cv::KalmanFilter> KF(4);
@@ -157,6 +179,11 @@ std::vector<cv::Point2f>  KF_predict(std::vector<cv::KalmanFilter> KF){
     return predpts;
 }
 
+
+-(void)outputAccelertionData:(CMAcceleration)acceleration
+{
+    acc = acceleration;
+}
 
 - (void)processImage:(cv::Mat&) image;
 {
@@ -228,9 +255,10 @@ std::vector<cv::Point2f>  KF_predict(std::vector<cv::KalmanFilter> KF){
         
         distance /= numInliers;
         
-        double time = CACurrentMediaTime();
         
-        if(numInliers < good_matches.size() / 5 || distance > 55){
+        double accelerationSq = acc.x*acc.x + acc.y*acc.y + acc.z*acc.z;
+        double time = CACurrentMediaTime();
+        if(numInliers < good_matches.size() * .15 || distance > 55 || accelerationSq > 1.1){
             if (first){
                 return;
             }

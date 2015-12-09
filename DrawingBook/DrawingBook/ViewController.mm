@@ -31,8 +31,11 @@ using namespace std;
     cv::Ptr<cv::DescriptorExtractor> extractor;
     cv::Ptr<cv::BFMatcher> matcher;
     cv::Mat intrinsics;
-    //cv::Mat prev_image;
+    std::vector<cv::Point2f> prev_scene_corners;
+    double prev_scene_updated;
+    std::vector<cv::KalmanFilter> KF;
     
+    bool started;
 }
 @property (nonatomic, retain) CvVideoCamera* videoCamera;
 @end
@@ -57,6 +60,10 @@ using namespace std;
     intrinsics.at<double>(2,2) = 1;
     intrinsics.at<double>(0,2) = 1631.5;
     intrinsics.at<double>(1,2) = 1223.5;
+    
+    
+    started = false;
+    
     
     // 1. Setup the your OpenCV view, so it takes up the entire App screen......
     int view_width = self.view.frame.size.width;
@@ -92,7 +99,45 @@ using namespace std;
 }
 
 
+std::vector<cv::KalmanFilter> start_KF(std::vector<cv::Point2f> pts){
+    std::vector<cv::KalmanFilter> KF(4);
+    for(int i = 0; i < KF.size(); i++){
+        KF[i] = cv::KalmanFilter(4,2,0);
+        cout << KF[i].statePre.size() << endl;
+        KF[i].statePre.at<float>(0) = pts[i].x;
+        KF[i].statePre.at<float>(1) = pts[i].y;
+        KF[i].statePre.at<float>(2) = 0;
+        KF[i].statePre.at<float>(3) = 0;
+        
+        KF[i].transitionMatrix = *(cv::Mat_<float>(4, 4) << 1,0,1,0,   0,1,0,1,  0,0,1,0,  0,0,0,1);
+        cv::setIdentity(KF[i].measurementMatrix);
+        cv::setIdentity(KF[i].processNoiseCov, cv::Scalar::all(.1));
+        cv::setIdentity(KF[i].measurementNoiseCov, cv::Scalar::all(50));
+        cv::setIdentity(KF[i].errorCovPost, cv::Scalar::all(.1));
+    }
+    return KF;
+}
 
+std::vector<cv::Point2f>  KF_estimate(std::vector<cv::KalmanFilter> KF, std::vector<cv::Point2f> pts){
+    std::vector<cv::Point2f> corrpt(KF.size());
+    for(int i = 0; i < KF.size(); i++){
+        cv::Mat_<float> m(2,1);
+        m(0) = pts[i].x;
+        m(1) = pts[i].y;
+        cv::Mat est = KF[i].correct(m);
+        corrpt[i] = cv::Point2f(est.at<float>(0), est.at<float>(1));
+    }
+    return corrpt;
+}
+
+std::vector<cv::Point2f>  KF_predict(std::vector<cv::KalmanFilter> KF){
+    std::vector<cv::Point2f> predpts(KF.size());
+    for(int i = 0; i < KF.size(); i++){
+        cv::Mat pred = KF[i].predict();
+        predpts[i] = cv::Point2f(pred.at<float>(0), pred.at<float>(1));
+    }
+    return predpts;
+}
 - (void)processImage:(cv::Mat&) image;
 {
     
@@ -125,7 +170,7 @@ using namespace std;
         std::vector< cv::DMatch > good_matches;
         
         for( int i = 0; i < matches.size(); i++ )
-        { if( matches[i].distance < 3*min_dist )
+        { if( matches[i].distance < 4*min_dist )
         { good_matches.push_back( matches[i]); }
         }
         
@@ -155,20 +200,32 @@ using namespace std;
             //cv::solvePnPRansac(source, dest, intrinsics, distCoeffs, rvec, tvec,false, 200, 8.0, good_matches.size()/2);
             
             
-            std::vector<cv::Point3f> proj_corners(6);
-            std::vector<cv::Point2f> scene_proj_corners(6);
+            std::vector<cv::Point3f> proj_corners(4);
+            std::vector<cv::Point2f> scene_proj_corners(4);
             
             //cv::perspectiveTransform(proj_corners, scene_proj_corners, camera);
             
-            std::vector<cv::Point2f> obj_corners(6);
+            std::vector<cv::Point2f> obj_corners(4);
             obj_corners[0] = cvPoint(0,0);
             obj_corners[1] = cvPoint( template_im.cols, 0 );
             obj_corners[2] = cvPoint( template_im.cols, template_im.rows );
             obj_corners[3] = cvPoint( 0, template_im.rows );
-            obj_corners[4] = cvPoint( template_im.cols/2, template_im.rows/2 );
-            obj_corners[5] = cvPoint( 0, template_im.rows/2 );
-            std::vector<cv::Point2f> scene_corners(6);
+            //obj_corners[4] = cvPoint( template_im.cols/2, template_im.rows/2 );
+            //obj_corners[5] = cvPoint( 0, template_im.rows/2 );
+            std::vector<cv::Point2f> scene_corners(4);
+            
+            
             cv::perspectiveTransform( obj_corners, scene_corners, H);
+            
+            if(!started){
+                started = true;
+                KF = start_KF(scene_corners);
+                cout << KF[0].statePre.size() << endl;
+                prev_scene_corners = scene_corners;
+            }
+            
+            
+            
             //cout << H << endl;
             //cout << scene_corners << endl;
             //-- Draw lines between the corners (the mapped object in the scene - image_2 )
@@ -176,6 +233,56 @@ using namespace std;
             cv::line( image_copy, scene_corners[1], scene_corners[2], cv::Scalar( 0, 255, 0), 4 );
             cv::line( image_copy, scene_corners[2], scene_corners[3], cv::Scalar( 0, 255, 0), 4 );
             cv::line( image_copy, scene_corners[3], scene_corners[0], cv::Scalar( 0, 255, 0), 4 );
+            
+            
+            double a = dist(scene_corners[0],scene_corners[1]);
+            double b = dist(scene_corners[1],scene_corners[2]);
+            double c = dist(scene_corners[2],scene_corners[3]);
+            double d = dist(scene_corners[3],scene_corners[0]);
+            
+            
+            cout << a << b << c << d << endl;
+            
+            if(  max(a,max(b,max(c,d))) > 1100 ||  min(a,min(b,min(c,d))) < 100){
+                return;
+            }
+            cv::vector<cv::Point2f> predPts, estPts;
+            predPts = KF_predict(KF);
+            
+            
+            float error = 0;
+            float scene_error = 0;
+            for(int i = 0; i < scene_corners.size(); i++){
+                error += dist(scene_corners[i], predPts[i]);
+                scene_error += dist(scene_corners[i], prev_scene_corners[i]);
+            }
+            
+            double time = CACurrentMediaTime();
+            if( time - prev_scene_updated > .4){
+                prev_scene_corners = scene_corners;
+                prev_scene_updated = time;
+            }
+            if(scene_error > 120){
+                scene_corners = prev_scene_corners;
+            }
+            else{
+                prev_scene_corners = scene_corners;
+                prev_scene_updated = time;
+                estPts = KF_estimate(KF, scene_corners);
+            }
+            
+            
+            
+//            cv::line( image_copy, estPts[0], estPts[1], cv::Scalar(255,0, 0), 4 );
+//            cv::line( image_copy, estPts[1], estPts[2], cv::Scalar(255,0, 0), 4 );
+//            cv::line( image_copy, estPts[2], estPts[3], cv::Scalar(255,0, 0), 4 );
+//            cv::line( image_copy, estPts[3], estPts[0], cv::Scalar(255,0, 0), 4 );
+            
+            
+            cv::line( image_copy, predPts[0], predPts[1], cv::Scalar(0, 0, 255), 4 );
+            cv::line( image_copy, predPts[1], predPts[2], cv::Scalar(0, 0, 255), 4 );
+            cv::line( image_copy, predPts[2], predPts[3], cv::Scalar(0, 0, 255), 4 );
+            cv::line( image_copy, predPts[3], predPts[0], cv::Scalar(0, 0, 255), 4 );
             
             float x = 120;
             float y = 385;
@@ -185,9 +292,10 @@ using namespace std;
             proj_corners[1] = cv::Point3f( template_im.cols, 0, 0 );
             proj_corners[2] = cv::Point3f( template_im.cols, template_im.rows, 0 );
             proj_corners[3] = cv::Point3f( 0, template_im.rows, 0 );
-            proj_corners[4] = cv::Point3f( template_im.cols/2, template_im.rows/2, 0);
-            proj_corners[5] = cv::Point3f( 0, template_im.rows/2, 0);
+            //proj_corners[4] = cv::Point3f( template_im.cols/2, template_im.rows/2, 0);
+            //proj_corners[5] = cv::Point3f( 0, template_im.rows/2, 0);
             
+            //either solve with scene_corners or estPts
             cv::solvePnP(proj_corners, scene_corners, intrinsics, distCoeffs, rvec, tvec);
             
             std::vector<cv::Point3f> cube_corners(8);
@@ -210,21 +318,6 @@ using namespace std;
             cv::line( image_copy, scene_proj_corners[2], scene_proj_corners[3], cv::Scalar(255, 0, 255), 1 );
             cv::line( image_copy, scene_proj_corners[3], scene_proj_corners[0], cv::Scalar(255, 0, 255), 1 );
             
-            
-            cv::line( image_copy, cube_proj_corners[0], cube_proj_corners[3], cv::Scalar(0, 0, 255), 1 );
-            cv::line( image_copy, cube_proj_corners[0], cube_proj_corners[4], cv::Scalar(0, 0, 255), 1 );
-            cv::line( image_copy, cube_proj_corners[3], cube_proj_corners[7], cv::Scalar(0, 0, 255), 1 );
-            cv::line( image_copy, cube_proj_corners[4], cube_proj_corners[7], cv::Scalar(0, 0, 255), 1 );
-            
-            cv::line( image_copy, cube_proj_corners[0], cube_proj_corners[1], cv::Scalar(0, 0, 255), 1 );
-            cv::line( image_copy, cube_proj_corners[2], cube_proj_corners[3], cv::Scalar(0, 0, 255), 1 );
-            cv::line( image_copy, cube_proj_corners[4], cube_proj_corners[5], cv::Scalar(0, 0, 255), 1 );
-            cv::line( image_copy, cube_proj_corners[6], cube_proj_corners[7], cv::Scalar(0, 0, 255), 1 );
-            
-            cv::line( image_copy, cube_proj_corners[1], cube_proj_corners[5], cv::Scalar(0, 0, 255), 1 );
-            cv::line( image_copy, cube_proj_corners[1], cube_proj_corners[2], cv::Scalar(0, 0, 255), 1 );
-            cv::line( image_copy, cube_proj_corners[5], cube_proj_corners[6], cv::Scalar(0, 0, 255), 1 );
-            cv::line( image_copy, cube_proj_corners[2], cube_proj_corners[6], cv::Scalar(0, 0, 255), 1 );
             
             cv::Mat camera_template;
             cv::warpPerspective(image_copy, camera_template, H.inv(), template_copy.size());
@@ -320,17 +413,14 @@ using namespace std;
             sq6_proj[3] = cube_proj_corners[6];
             sq6_pts[3] = cv::Point2f(cameraSq6.cols, cameraSq6.rows);
             
-            draw_background(H, image_copy, template_im.cols, template_im.rows);
+            //draw_background(H, image_copy, template_im.cols, template_im.rows);
             overlay_image(image_copy, cameraSq3, sq3_pts, sq3_proj);
             overlay_image(image_copy, cameraSq1, sq1_pts, sq1_proj);
             overlay_image(image_copy, cameraSq2, sq2_pts, sq2_proj);
             overlay_image(image_copy, cameraSq4, sq4_pts, sq4_proj);
             overlay_image(image_copy, cameraSq5, sq5_pts, sq5_proj);
             overlay_image(image_copy, cameraSq6, sq6_pts, sq6_proj);
-            
-            
-             
-        }
+                    }
     } @catch(NSException *theException) {
         cout << theException.name << endl;
         cout << theException.reason << endl;
@@ -339,6 +429,11 @@ using namespace std;
     //cv::drawMatches(gray, K, template_gray, K_template, good_matches, image);
     cvtColor(image_copy, image, CV_BGR2BGRA);
     
+    
+}
+
+double dist(cv::Point2f a, cv::Point2f(b)){
+    return cv::norm(a-b);
 }
 
 void overlay_image(cv::Mat image, cv::Mat square, std::vector<cv::Point2f> sq_pts, std::vector<cv::Point2f> sq_proj){
@@ -417,14 +512,15 @@ cv::Mat get_extrinsics(cv::Mat intrinsics, cv::Mat H){
     return Omega;
 }
 
-
-
-
 cv::vector<cv::KeyPoint> getKeyPoints(cv::Mat &img, cv::Ptr<cv::FeatureDetector> detector){
     cv::vector<cv::KeyPoint> K;
     detector->detect(img, K);
     return K;
 }
+
+
+
+
 
 
 

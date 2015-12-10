@@ -114,7 +114,7 @@ using namespace std;
     // 4. Initialize the camera parameters and start the camera (inside the App)
     videoCamera_ = [[CvVideoCamera alloc] initWithParentView:liveView_];
     videoCamera_.delegate = self;
-    videoCamera_.defaultFPS = 60;
+    videoCamera_.defaultFPS = 24;
     videoCamera_.grayscaleMode = NO;
     videoCamera_.rotateVideo = YES;
     

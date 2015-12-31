@@ -1,6 +1,9 @@
 # DrawingBook
 16-423 Project by Tommy Lau and Will Willsey.
 
+#Video Link
+https://youtu.be/y49zOtfOqGU
+
 #Summary
 In this  project we plan on developing an application on iOS devices in order to project augmented reality 3D objects onto a coloring book, where the colors filled in are projected onto the 3D object itself. We plan on mapping surfaces and textures of the 3D models to patterns on a coloring book or coloring sheet, and any coloring onto the pattern will then be reflected and projected to the augmented reality 3D model. Our goal is to familiar ourselves with copmuter vision algorithms and iOS development in the process while developing a creative upgrade to ordinary coloring games.
 
